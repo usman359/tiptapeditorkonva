@@ -1,5 +1,7 @@
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+
 const App = () => {
-  return <div>App</div>;
+  return <SimpleEditor />;
 };
 
 export default App;
