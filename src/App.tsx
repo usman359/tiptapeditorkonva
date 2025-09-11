@@ -58,10 +58,7 @@ import { FontSize } from "reactjs-tiptap-editor/lib/FontSize.js";
 import { LineHeight } from "reactjs-tiptap-editor/lib/LineHeight.js";
 
 // Core Features
-import { Document } from "reactjs-tiptap-editor/lib/Document.js";
 import { History } from "reactjs-tiptap-editor/lib/History.js";
-import { Selection } from "reactjs-tiptap-editor/lib/Selection.js";
-import { TrailingNode } from "reactjs-tiptap-editor/lib/TrailingNode.js";
 
 // Utilities
 import {
@@ -78,6 +75,17 @@ import {
 import { Toaster } from "react-hot-toast";
 import { TOAST_OPTIONS } from "./lib/toast-config";
 import "./styles/editor.css";
+
+// Treat HTML with only empty paragraphs/whitespace as empty
+const isEffectivelyEmpty = (html: string): boolean => {
+  if (html == null) return true;
+  const textOnly = html
+    .replace(/<br\s*\/?>(?![^<]*>)/gi, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+  return textOnly.length === 0;
+};
 
 const extensions = [
   BaseKit.configure({
@@ -143,16 +151,15 @@ const extensions = [
   FontSize,
   LineHeight,
 
-  // Core Features
-  Document,
+  // Core Features (avoid duplicates already provided by BaseKit)
   History,
-  Selection,
-  TrailingNode,
 ];
 
 const App = () => {
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [editorKey, setEditorKey] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Load content from localStorage on component mount
   useEffect(() => {
@@ -160,23 +167,33 @@ const App = () => {
     if (savedContent) {
       setContent(savedContent);
     }
-    setIsLoading(false);
+    setHasLoaded(true);
+    // Give a small delay to ensure editor is ready
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
   }, []);
 
-  // Save content to localStorage whenever it changes
+  // Save content to localStorage whenever it changes (but only after initial load)
   useEffect(() => {
-    if (!isLoading && content) {
-      saveContent(content);
+    if (hasLoaded && !isLoading) {
+      saveContent(content, false); // Don't show toast on every keystroke
     }
-  }, [content, isLoading]);
+  }, [content, hasLoaded, isLoading]);
 
   const onChangeContent = (value: string) => {
+    // Ignore editor's initial empty payload while we're still loading
+    if (isLoading && content && isEffectivelyEmpty(value)) {
+      return;
+    }
     setContent(value);
   };
 
   const handleClearContent = () => {
     setContent("");
     clearContent();
+    // Force editor to re-render by updating the key
+    setEditorKey((prev) => prev + 1);
   };
 
   return (
@@ -222,33 +239,36 @@ const App = () => {
         </div>
       </div>
 
-      <RichTextEditor
-        output="html"
-        content={content}
-        onChangeContent={onChangeContent}
-        extensions={extensions}
-        dark={false}
-        dense={false}
-        maxWidth="100%"
-        minHeight="600px"
-        bubbleMenu={{
-          render({ extensionsNames, editor, disabled }, bubbleDefaultDom) {
-            return (
-              <>
-                {bubbleDefaultDom}
+      {!isLoading && (
+        <RichTextEditor
+          key={editorKey}
+          output="html"
+          content={content}
+          onChangeContent={onChangeContent}
+          extensions={extensions}
+          dark={false}
+          dense={false}
+          maxWidth="100%"
+          minHeight="600px"
+          bubbleMenu={{
+            render({ extensionsNames, editor, disabled }, bubbleDefaultDom) {
+              return (
+                <>
+                  {bubbleDefaultDom}
 
-                {extensionsNames.includes("drawer") ? (
-                  <BubbleMenuDrawer
-                    disabled={disabled}
-                    editor={editor}
-                    key="drawer"
-                  />
-                ) : null}
-              </>
-            );
-          },
-        }}
-      />
+                  {extensionsNames.includes("drawer") ? (
+                    <BubbleMenuDrawer
+                      disabled={disabled}
+                      editor={editor}
+                      key="drawer"
+                    />
+                  ) : null}
+                </>
+              );
+            },
+          }}
+        />
+      )}
 
       <Toaster position={TOAST_OPTIONS.position} toastOptions={TOAST_OPTIONS} />
     </div>
