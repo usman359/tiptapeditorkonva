@@ -1,29 +1,22 @@
 // localStorage utilities for persisting editor content
 
-import toast from "react-hot-toast";
+import { showToast } from "./toast-config";
 
 const STORAGE_KEY = "tiptap-editor-content";
 
 export const saveContent = (
   content: string,
-  showToast: boolean = false
+  showToastNotification: boolean = false
 ): void => {
   try {
     localStorage.setItem(STORAGE_KEY, content);
     // Only show toast if explicitly requested (for manual saves)
-    if (showToast) {
-      toast.success("Content saved", {
-        duration: 2000,
-        position: "bottom-right",
-        style: {
-          fontSize: "12px",
-          padding: "8px 12px",
-        },
-      });
+    if (showToastNotification) {
+      showToast.success("Content saved");
     }
   } catch (error) {
     console.error("Failed to save content to localStorage:", error);
-    toast.error("Failed to save content");
+    showToast.error("Failed to save content");
   }
 };
 
@@ -40,13 +33,10 @@ export const loadContent = (): string => {
 export const clearContent = (): void => {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    toast.success("Content cleared", {
-      duration: 3000,
-      position: "top-center",
-    });
+    showToast.success("Content cleared");
   } catch (error) {
     console.error("Failed to clear content from localStorage:", error);
-    toast.error("Failed to clear content");
+    showToast.error("Failed to clear content");
   }
 };
 

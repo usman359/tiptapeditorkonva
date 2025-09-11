@@ -3,7 +3,7 @@
 // VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
 // VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 
-import toast from "react-hot-toast";
+import { showToast } from "./toast-config";
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -24,9 +24,7 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
   }
 
   // Show loading toast and disable pointer events
-  const loadingToast = toast.loading("Uploading file...", {
-    duration: Infinity,
-  });
+  const loadingToast = showToast.loading("Uploading file...");
 
   // Disable pointer events on the entire document
   document.body.style.pointerEvents = "none";
@@ -48,14 +46,14 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
 
     if (!response.ok) {
       const errorMessage = `Upload failed: ${response.statusText}`;
-      toast.error(errorMessage, { id: loadingToast });
+      showToast.error(errorMessage, { id: loadingToast });
       throw new Error(errorMessage);
     }
 
     const result: CloudinaryUploadResult = await response.json();
 
     // Show success toast
-    toast.success("File uploaded successfully!", { id: loadingToast });
+    showToast.success("File uploaded successfully!", { id: loadingToast });
 
     return result.secure_url;
   } catch (error) {
@@ -64,7 +62,7 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
     // Show error toast with the actual error message
     const errorMessage =
       error instanceof Error ? error.message : "Upload failed";
-    toast.error(errorMessage, { id: loadingToast });
+    showToast.error(errorMessage, { id: loadingToast });
 
     // Fallback to local URL
     return URL.createObjectURL(file);

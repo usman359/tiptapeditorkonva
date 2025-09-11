@@ -76,6 +76,8 @@ import {
   uploadFileToCloudinary,
 } from "./lib/cloudinary";
 import { Toaster } from "react-hot-toast";
+import { TOAST_OPTIONS } from "./lib/toast-config";
+import "./styles/editor.css";
 
 const extensions = [
   BaseKit.configure({
@@ -219,6 +221,7 @@ const App = () => {
           </div>
         </div>
       </div>
+
       <RichTextEditor
         output="html"
         content={content}
@@ -227,7 +230,7 @@ const App = () => {
         dark={false}
         dense={false}
         maxWidth="100%"
-        minHeight="500px"
+        minHeight="600px"
         bubbleMenu={{
           render({ extensionsNames, editor, disabled }, bubbleDefaultDom) {
             return (
@@ -246,37 +249,8 @@ const App = () => {
           },
         }}
       />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#363636",
-            color: "#fff",
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: "#4ade80",
-              secondary: "#fff",
-            },
-          },
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
-            },
-          },
-          loading: {
-            duration: Infinity,
-            iconTheme: {
-              primary: "#3b82f6",
-              secondary: "#fff",
-            },
-          },
-        }}
-      />
+
+      <Toaster position={TOAST_OPTIONS.position} toastOptions={TOAST_OPTIONS} />
     </div>
   );
 };
