@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import RichTextEditor from "reactjs-tiptap-editor";
 import { BaseKit } from "reactjs-tiptap-editor";
 import "reactjs-tiptap-editor/style.css";
@@ -28,10 +28,10 @@ import { Indent } from "reactjs-tiptap-editor/lib/Indent.js";
 import { Table } from "reactjs-tiptap-editor/lib/Table.js";
 import { CodeBlock } from "reactjs-tiptap-editor/lib/CodeBlock.js";
 import { Image } from "reactjs-tiptap-editor/lib/Image.js";
+import "react-image-crop/dist/ReactCrop.css";
 import { Video } from "reactjs-tiptap-editor/lib/Video.js";
 import { Iframe } from "reactjs-tiptap-editor/lib/Iframe.js";
 import { Link } from "reactjs-tiptap-editor/lib/Link.js";
-import { Attachment } from "reactjs-tiptap-editor/lib/Attachment.js";
 
 // Interactive Features
 import { SlashCommand } from "reactjs-tiptap-editor/lib/SlashCommand.js";
@@ -42,9 +42,10 @@ import { SearchAndReplace } from "reactjs-tiptap-editor/lib/SearchAndReplace.js"
 // Social Media
 
 // Document Features
-import { TableOfContents } from "reactjs-tiptap-editor/lib/TableOfContent.js";
 import { TextDirection } from "reactjs-tiptap-editor/lib/TextDirection.js";
 import { Drawer } from "reactjs-tiptap-editor/lib/Drawer.js";
+import { BubbleMenuDrawer } from "reactjs-tiptap-editor/bubble-extra";
+import "easydrawer/styles.css";
 
 // Import/Export
 import { ExportPdf } from "reactjs-tiptap-editor/lib/ExportPdf.js";
@@ -61,6 +62,20 @@ import { Document } from "reactjs-tiptap-editor/lib/Document.js";
 import { History } from "reactjs-tiptap-editor/lib/History.js";
 import { Selection } from "reactjs-tiptap-editor/lib/Selection.js";
 import { TrailingNode } from "reactjs-tiptap-editor/lib/TrailingNode.js";
+
+// Utilities
+import {
+  saveContent,
+  loadContent,
+  hasStoredContent,
+  clearContent,
+} from "./lib/storage";
+import {
+  uploadImageToCloudinary,
+  uploadVideoToCloudinary,
+  uploadFileToCloudinary,
+} from "./lib/cloudinary";
+import { Toaster } from "react-hot-toast";
 
 const extensions = [
   BaseKit.configure({
@@ -96,12 +111,14 @@ const extensions = [
   // Advanced Content
   Table,
   CodeBlock,
-  Image,
-  Video,
+  Image.configure({
+    upload: uploadImageToCloudinary,
+  }),
+  Video.configure({
+    upload: uploadVideoToCloudinary,
+  }),
   Iframe,
   Link,
-  Attachment,
-
   // Interactive Features
   SlashCommand,
   Mention,
@@ -109,9 +126,10 @@ const extensions = [
   SearchAndReplace,
 
   // Document Features
-  TableOfContents,
   TextDirection,
-  Drawer,
+  Drawer.configure({
+    upload: uploadFileToCloudinary,
+  }),
 
   // Import/Export
   ExportPdf,
@@ -132,13 +150,75 @@ const extensions = [
 
 const App = () => {
   const [content, setContent] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load content from localStorage on component mount
+  useEffect(() => {
+    const savedContent = loadContent();
+    if (savedContent) {
+      setContent(savedContent);
+    }
+    setIsLoading(false);
+  }, []);
+
+  // Save content to localStorage whenever it changes
+  useEffect(() => {
+    if (!isLoading && content) {
+      saveContent(content);
+    }
+  }, [content, isLoading]);
 
   const onChangeContent = (value: string) => {
     setContent(value);
   };
 
+  const handleClearContent = () => {
+    setContent("");
+    clearContent();
+  };
+
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+      <div
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "10px 0",
+          borderBottom: "1px solid #e0e0e0",
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "600" }}>
+          Rich Text Editor
+        </h1>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={handleClearContent}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#f44336",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Clear All
+          </button>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#666",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {hasStoredContent() ? "💾 Auto-saved" : "📝 New document"}
+          </div>
+        </div>
+      </div>
       <RichTextEditor
         output="html"
         content={content}
@@ -148,6 +228,54 @@ const App = () => {
         dense={false}
         maxWidth="100%"
         minHeight="500px"
+        bubbleMenu={{
+          render({ extensionsNames, editor, disabled }, bubbleDefaultDom) {
+            return (
+              <>
+                {bubbleDefaultDom}
+
+                {extensionsNames.includes("drawer") ? (
+                  <BubbleMenuDrawer
+                    disabled={disabled}
+                    editor={editor}
+                    key="drawer"
+                  />
+                ) : null}
+              </>
+            );
+          },
+        }}
+      />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: "#4ade80",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+          loading: {
+            duration: Infinity,
+            iconTheme: {
+              primary: "#3b82f6",
+              secondary: "#fff",
+            },
+          },
+        }}
       />
     </div>
   );
