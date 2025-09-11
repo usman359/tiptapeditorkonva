@@ -26,6 +26,7 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
+import { KonvaCanvasNode } from "@/components/tiptap-node/konva-canvas-node/konva-canvas-node-extension";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -33,6 +34,7 @@ import "@/components/tiptap-node/list-node/list-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/heading-node/heading-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
+import "@/components/tiptap-node/konva-canvas-node/konva-canvas-node.scss";
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
@@ -53,6 +55,7 @@ import {
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
+import { KonvaCanvasButton } from "@/components/tiptap-ui/konva-canvas-button";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
@@ -140,7 +143,8 @@ const MainToolbarContent = ({
       <ToolbarSeparator />
 
       <ToolbarGroup>
-        <ImageUploadButton text="Add" />
+        <ImageUploadButton text="Image" />
+        <KonvaCanvasButton text="Canvas" />
       </ToolbarGroup>
 
       <Spacer />
@@ -191,6 +195,21 @@ export function SimpleEditor() {
   >("main");
   const toolbarRef = React.useRef<HTMLDivElement>(null);
 
+  // Load content from localStorage synchronously
+  const getInitialContent = () => {
+    try {
+      const savedContent = localStorage.getItem("tiptap-editor-content");
+      if (savedContent) {
+        return JSON.parse(savedContent);
+      }
+    } catch (error) {
+      console.error("Failed to parse saved content:", error);
+    }
+    return content;
+  };
+
+  const [initialContent] = React.useState(getInitialContent);
+
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
@@ -228,12 +247,21 @@ export function SimpleEditor() {
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
-        limit: 3,
+
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
+      KonvaCanvasNode.configure({
+        width: 800,
+        height: 400,
+      }),
     ],
-    content,
+    content: initialContent,
+    onUpdate: ({ editor }) => {
+      // Save content to localStorage on every update
+      const json = editor.getJSON();
+      localStorage.setItem("tiptap-editor-content", JSON.stringify(json));
+    },
   });
 
   const rect = useCursorVisibility({
@@ -246,6 +274,34 @@ export function SimpleEditor() {
       setMobileView("main");
     }
   }, [isMobile, mobileView]);
+
+  // Function to clear all localStorage data
+  const clearAllData = () => {
+    if (
+      confirm(
+        "Are you sure you want to clear all data? This will reset the editor, canvas, and theme settings."
+      )
+    ) {
+      localStorage.removeItem("tiptap-editor-content");
+      localStorage.removeItem("konva-canvas-data");
+      localStorage.removeItem("tiptap-theme");
+      // Reload the page to reset everything
+      window.location.reload();
+    }
+  };
+
+  // Add keyboard shortcut for clearing data (Ctrl+Shift+C or Cmd+Shift+C)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "C") {
+        e.preventDefault();
+        clearAllData();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="simple-editor-wrapper">

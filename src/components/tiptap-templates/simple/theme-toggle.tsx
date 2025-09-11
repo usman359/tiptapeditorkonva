@@ -1,34 +1,42 @@
-import * as React from "react"
+import * as React from "react";
 
 // --- UI Primitives ---
-import { Button } from "@/components/tiptap-ui-primitive/button"
+import { Button } from "@/components/tiptap-ui-primitive/button";
 
 // --- Icons ---
-import { MoonStarIcon } from "@/components/tiptap-icons/moon-star-icon"
-import { SunIcon } from "@/components/tiptap-icons/sun-icon"
+import { MoonStarIcon } from "@/components/tiptap-icons/moon-star-icon";
+import { SunIcon } from "@/components/tiptap-icons/sun-icon";
 
 export function ThemeToggle() {
-  const [isDarkMode, setIsDarkMode] = React.useState<boolean>(false)
+  // Load theme synchronously to prevent flash
+  const getInitialTheme = () => {
+    try {
+      const savedTheme = localStorage.getItem("tiptap-theme");
+      if (savedTheme) {
+        const isDark = savedTheme === "dark";
+        // Apply theme immediately
+        document.documentElement.classList.toggle("dark", isDark);
+        return isDark;
+      }
+    } catch (error) {
+      console.error("Failed to load theme from localStorage:", error);
+    }
+    // Fallback to system preference
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const isDark = mediaQuery.matches;
+    document.documentElement.classList.toggle("dark", isDark);
+    return isDark;
+  };
+
+  const [isDarkMode, setIsDarkMode] = React.useState<boolean>(getInitialTheme);
 
   React.useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const handleChange = () => setIsDarkMode(mediaQuery.matches)
-    mediaQuery.addEventListener("change", handleChange)
-    return () => mediaQuery.removeEventListener("change", handleChange)
-  }, [])
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    // Save theme to localStorage
+    localStorage.setItem("tiptap-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
-  React.useEffect(() => {
-    const initialDarkMode =
-      !!document.querySelector('meta[name="color-scheme"][content="dark"]') ||
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    setIsDarkMode(initialDarkMode)
-  }, [])
-
-  React.useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDarkMode)
-  }, [isDarkMode])
-
-  const toggleDarkMode = () => setIsDarkMode((isDark) => !isDark)
+  const toggleDarkMode = () => setIsDarkMode((isDark) => !isDark);
 
   return (
     <Button
@@ -42,5 +50,5 @@ export function ThemeToggle() {
         <SunIcon className="tiptap-button-icon" />
       )}
     </Button>
-  )
+  );
 }

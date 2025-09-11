@@ -1,0 +1,119 @@
+.konva-canvas-wrapper {
+  margin: 1rem 0;
+
+  .konva-canvas-container {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s ease;
+
+    &.selected {
+      border-color: #007bff;
+    }
+
+    .konva-toolbar {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      flex-wrap: wrap;
+      align-items: center;
+
+      button {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+
+        &[data-style="default"] {
+          background: #007bff;
+          color: white;
+          border: 1px solid #007bff;
+
+          &:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+          }
+        }
+
+        &[data-style="ghost"] {
+          background: transparent;
+          color: #6c757d;
+          border: 1px solid #dee2e6;
+
+          &:hover {
+            background: #e9ecef;
+            color: #495057;
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
+
+    .konva-stage-container {
+      background: white;
+      overflow: hidden;
+      width: 100%;
+
+      canvas {
+        display: block;
+        cursor: crosshair;
+        width: 100% !important;
+        height: auto !important;
+      }
+    }
+  }
+}
+
+/* Dark mode support */
+.dark {
+  .konva-canvas-wrapper {
+    .konva-canvas-container {
+      background: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+      &.selected {
+        border-color: #4dabf7;
+      }
+
+      .konva-toolbar {
+        background: #2d3748;
+        border-bottom-color: #4a5568;
+
+        button {
+          &[data-style="default"] {
+            background: #4dabf7;
+            border-color: #4dabf7;
+
+            &:hover {
+              background: #339af0;
+              border-color: #339af0;
+            }
+          }
+
+          &[data-style="ghost"] {
+            color: #a0aec0;
+            border-color: #4a5568;
+
+            &:hover {
+              background: #4a5568;
+              color: #e2e8f0;
+            }
+          }
+        }
+      }
+
+      .konva-stage-container {
+        background: #1a1a1a;
+        width: 100%;
+      }
+    }
+  }
+}

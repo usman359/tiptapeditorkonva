@@ -35,11 +35,13 @@
     "@tiptap/starter-kit": "^3.4.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "konva": "^10.0.2",
     "lodash.throttle": "^4.1.1",
     "lucide-react": "^0.543.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hotkeys-hook": "^5.1.0",
+    "react-konva": "^19.0.10",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.13"
   },

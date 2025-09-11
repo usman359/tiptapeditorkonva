@@ -318,19 +318,32 @@ export const handleImageUpload = async (
     onProgress?.({ progress });
   }
 
-  // Create object URL for immediate display (TipTap v2 compatible)
+  // Convert to base64 data URL for persistence
   return new Promise((resolve, reject) => {
     if (abortSignal?.aborted) {
       reject(new Error("Upload cancelled"));
       return;
     }
 
-    onProgress?.({ progress: 100 });
+    const reader = new FileReader();
 
-    // Create object URL instead of data URL for TipTap v2 compatibility
-    const objectURL = URL.createObjectURL(file);
-    console.log("Image upload successful, object URL:", objectURL);
-    resolve(objectURL);
+    reader.onload = () => {
+      if (abortSignal?.aborted) {
+        reject(new Error("Upload cancelled"));
+        return;
+      }
+
+      onProgress?.({ progress: 100 });
+      const dataURL = reader.result as string;
+      console.log("Image upload successful, data URL created");
+      resolve(dataURL);
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+
+    reader.readAsDataURL(file);
   });
 };
 
